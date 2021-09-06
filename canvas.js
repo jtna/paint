@@ -2,7 +2,6 @@ let isDrawing = false;
 let x = 0;
 let y = 0;
 let lines = '';
-console.log("xy", x, y);
 
 const myCanvas = document.getElementById('canvas');
 const context = myCanvas.getContext('2d');
@@ -50,6 +49,13 @@ myCanvas.addEventListener('mousemove', onMousemove);
 myCanvas.addEventListener('mouseup', onMouseup);
 
 myCanvas.addEventListener('touchstart', e => {
+  document.querySelector('#Status').innerHTML = 'touchstart' + e.targetTouches.length;
+  if (e.targetTouches.length >= 2) {
+    isDrawing = false; // prevent multitouch from drawing lines
+    // but don't call preventDefault(), which blocks multitouch move and zoom
+    return;
+  }
+
   var touches = e.changedTouches;
   for (var i=0; i<touches.length; i++) {
     onMousedown(touches[i]);
@@ -57,13 +63,21 @@ myCanvas.addEventListener('touchstart', e => {
 });
 
 myCanvas.addEventListener('touchmove', e => {
+  document.querySelector('#Status').innerHTML = 'touchmove' + e.targetTouches.length + "/" + e.changedTouches.length;
+  // targetTouches.length is 2 as long as two fingers are touching the screen
+  // changedTouches.length is 2 only while two fingers are moving
+  if (e.targetTouches.length == 1) {
+    e.preventDefault(); // prevent scrolling from touch
+  }
+
   var touches = e.changedTouches;
   for (var i=0; i<touches.length; i++) {
     onMousemove(touches[i]);
   }
-});
+}, { passive: false }); // also supposed to prevent scrolling from touch
 
 myCanvas.addEventListener('touchend', e => {
+  document.querySelector('#Status').innerHTML = 'touchend';
   var touches = e.changedTouches;
   for (var i=0; i<touches.length; i++) {
     onMouseup(touches[i]);
