@@ -2,39 +2,76 @@ let isDrawing = false;
 let x = 0;
 let y = 0;
 let lines = '';
+console.log("xy", x, y);
 
-const myPics = document.getElementById('canvas');
-const context = myPics.getContext('2d');
+const myCanvas = document.getElementById('canvas');
+const context = myCanvas.getContext('2d');
 
 canvas.height = window.innerHeight;
 canvas.width = window.innerWidth;
+const xoff = canvas.offsetLeft;
+const yoff = canvas.offsetTop;
 
 doClear();
 
-myPics.addEventListener('mousedown', e => {
-  x = e.offsetX;
-  y = e.offsetY;
+// X and Y coordinates that take into account scroll, plus the canvas' offset
+function getX(e) { return e.pageX - xoff; }
+function getY(e) { return e.pageY - yoff; }
+
+function onMousedown(e)
+{
+  //console.log("onMousedown");
+  x = getX(e);
+  y = getY(e);
   isDrawing = true;
-});
+}
 
-myPics.addEventListener('mousemove', e => {
+function onMousemove(e) {
+  //console.log("onMousemove");
   if (isDrawing === true) {
-    drawLine(context, x, y, e.offsetX, e.offsetY);
-    x = e.offsetX;
-    y = e.offsetY;
+    drawLine(context, x, y, getX(e), getY(e));
+    x = getX(e);
+    y = getY(e);
   }
-});
+}
 
-window.addEventListener('mouseup', e => {
+function onMouseup(e) {
+  //console.log("onMouseup");
   if (isDrawing === true) {
-    drawLine(context, x, y, e.offsetX, e.offsetY);
+    drawLine(context, x, y, getX(e), getY(e));
     x = 0;
     y = 0;
     isDrawing = false;
   }
+}
+
+myCanvas.addEventListener('mousedown', onMousedown);
+myCanvas.addEventListener('mousemove', onMousemove);
+myCanvas.addEventListener('mouseup', onMouseup);
+
+myCanvas.addEventListener('touchstart', e => {
+  var touches = e.changedTouches;
+  for (var i=0; i<touches.length; i++) {
+    onMousedown(touches[i]);
+  }
+});
+
+myCanvas.addEventListener('touchmove', e => {
+  var touches = e.changedTouches;
+  for (var i=0; i<touches.length; i++) {
+    onMousemove(touches[i]);
+  }
+});
+
+myCanvas.addEventListener('touchend', e => {
+  var touches = e.changedTouches;
+  for (var i=0; i<touches.length; i++) {
+    onMouseup(touches[i]);
+  }
 });
 
 function drawLine(context, x1, y1, x2, y2) {
+  //console.log("drawLine: ", x1, y1, x2, y2);
   lines += String.fromCodePoint(x1, y1, x2, y2); // convert coordinates to string
   context.beginPath();
   context.strokeStyle = 'black';
@@ -57,6 +94,7 @@ function doSave() {
 
 function doLoad() {
   lines = localStorage.getItem('lines');
+  if (!lines) return;
   let i = 0;
   const arr = new Array(4);
 
